@@ -9,8 +9,8 @@
 ///////////////////////////////////////////////////
 
 //canvas Width and Height
-let w = 1000;
-let h = 1000;
+let w = 600;
+let h = 600;
 
 //starting position
 let x = w/2;
