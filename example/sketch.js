@@ -1,14 +1,28 @@
 // etch-a-sketch project
 // Sept 9 2024
+///////////////////////////////////////////////////
+//
+//  Use WASD to control the cursor and draw pictures.
+//  Rapidly scroll the mouse wheel to slowly erase your masterpiece.
+//  Click somewhere on the canvas to teleport the cursor there.
+//
+///////////////////////////////////////////////////
+
+//canvas Width and Height
+let w = 1000;
+let h = 1000;
+
+//starting position
+let x = w/2;
+let y = h/2;
 
 let speed = 0;
-let x = 300;
-let y = 300;
 let color = 0;
 let cooldown = 0;
-let w = 600;
-let h = 600;
 let bgColor = 220;
+
+//first click ignores teleport, because you sometimes need to click to be able to move in canvas
+let firstClick = true;
 
 function setup() {
   createCanvas(w, h);
@@ -16,6 +30,7 @@ function setup() {
 }
 
 function draw() {
+  //change speed every frame and check for input
   speed = (randomGaussian(3, 1) * random(-20, 200)) / 500;
   checkInput();
 }
@@ -49,7 +64,6 @@ function checkInput() {
       }
     }
 
-    
   }
   stroke(color);
   fill(color);
@@ -58,10 +72,22 @@ function checkInput() {
 
 function mouseWheel() {
   //scrolling puts white squares everywhere, slowly clearing the drawing.
-  //place background colored square randomly with random size.
+  //place background colored square somewhere random with random size.
   let whiteSquareX = random(0, w + 1);
   let whiteSquareY = random(0, h + 1);
   stroke(bgColor);
   fill(bgColor);
   circle(whiteSquareX, whiteSquareY, random(5, 200));
+}
+
+function mousePressed() {
+
+  if (firstClick === true) {
+    firstClick = false;
+  }
+  else{
+   //click anywhere on screen to move cursor to mouse position (it's cheating)
+   x = mouseX;
+   y = mouseY;
+  }
 }
