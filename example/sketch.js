@@ -70,7 +70,7 @@ function checkInput() {
   circle(x, y, 2);
 }
 
-function mouseWheel() {
+function mouseWheel() { //learned on my own
   //scrolling puts white squares everywhere, slowly clearing the drawing.
   //place background colored square somewhere random with random size.
   let whiteSquareX = random(0, w + 1);
