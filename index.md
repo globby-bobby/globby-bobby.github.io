@@ -1,6 +1,8 @@
 #  Compsci
 
 ## Demios
--[Etch-A-Sketch](example)
+-[Image Demo](image-demo)
 
-## sjghslgj
+
+## Projects
+-[Etch-A-Sketch](example)
