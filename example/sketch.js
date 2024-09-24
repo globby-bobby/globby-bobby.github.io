@@ -21,7 +21,7 @@ let color = 0;
 let cooldown = 0;
 let bgColor = 220;
 
-//first click ignores teleport, because you sometimes need to click to be able to move in canvas
+//first click ignores teleport, because you sometimes need to click the screen to be able to move in canvas
 let firstClick = true;
 
 function setup() {
@@ -86,7 +86,7 @@ function mousePressed() {
     firstClick = false;
   }
   else{
-   //click anywhere on screen to move cursor to mouse position (it's cheating)
+   //click anywhere on screen to move cursor to mouse position
    x = mouseX;
    y = mouseY;
   }
