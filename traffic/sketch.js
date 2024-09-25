@@ -35,9 +35,9 @@ function checkState() {
   ellipse(width/2, height/2 - 65, 50, 50); //top
   ellipse(width/2, height/2, 50, 50); //middle
   ellipse(width/2, height/2 + 65, 50, 50); //bottom
-  if (state === "red") {
+  if (state === "green") {
 
-    fill("red")
+    fill("green")
     ellipse(width/2, height/2 - 65, 50, 50);
     if (millis() >= time) {
     state = "yellow";
@@ -49,16 +49,16 @@ function checkState() {
     fill("yellow")
     ellipse(width/2, height/2, 50, 50);
     if (millis() >= time) {
-      state = "green";
+      state = "red";
       time += 6000;
       }
   }
-  else if (state === "green") {
+  else if (state === "red") {
 
-    fill("green")
+    fill("red")
     ellipse(width/2, height/2 + 65, 50, 50);
     if (millis() >= time) {
-      state = "red";
+      state = "green";
       time += 4000;
       }
 
