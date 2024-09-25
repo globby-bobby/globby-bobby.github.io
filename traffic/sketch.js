@@ -30,37 +30,36 @@ function drawOutlineOfLights() {
 }
 
 function checkState() {
-  print("Check")
-  fill(50)
+  fill(50);
   ellipse(width/2, height/2 - 65, 50, 50); //top
   ellipse(width/2, height/2, 50, 50); //middle
   ellipse(width/2, height/2 + 65, 50, 50); //bottom
   if (state === "green") {
 
-    fill("green")
+    fill("green");
     ellipse(width/2, height/2 - 65, 50, 50);
     if (millis() >= time) {
-    state = "yellow";
-    time += 1500;
+      state = "yellow";
+     time += 1500;
     }
   }
   else if (state === "yellow") {
 
-    fill("yellow")
+    fill("yellow");
     ellipse(width/2, height/2, 50, 50);
     if (millis() >= time) {
       state = "red";
       time += 6000;
-      }
+    }
   }
   else if (state === "red") {
 
-    fill("red")
+    fill("red");
     ellipse(width/2, height/2 + 65, 50, 50);
     if (millis() >= time) {
       state = "green";
       time += 4000;
-      }
+    }
 
   }
 
