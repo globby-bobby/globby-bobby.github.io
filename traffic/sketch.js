@@ -40,7 +40,7 @@ function checkState() {
     ellipse(width/2, height/2 - 65, 50, 50);
     if (millis() >= time) {
       state = "yellow";
-     time += 1500;
+      time += 1500;
     }
   }
   else if (state === "yellow") {
