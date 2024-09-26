@@ -9,12 +9,12 @@
 ///////////////////////////////////////////////////
 
 //canvas Width and Height
-let w = windowWidth;
-let h = windowHeight;
+let w;
+let h;
 
 //starting position
-let x = w/2;
-let y = h/2;
+let x;
+let y;
 
 let speed = 0;
 let penColor = 0;
@@ -25,6 +25,10 @@ let bgColor = 220;
 let firstClick = true;
 
 function setup() {
+  w = windowWidth;
+  h = windowHeight;
+  x = w/2;
+  y = h/2;
   createCanvas(w, h);
   background(bgColor);
 }
