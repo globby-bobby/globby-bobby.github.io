@@ -9,15 +9,15 @@
 ///////////////////////////////////////////////////
 
 //canvas Width and Height
-let w = 600;
-let h = 600;
+let w = windowWidth;
+let h = windowHeight;
 
 //starting position
 let x = w/2;
 let y = h/2;
 
 let speed = 0;
-let color = 0;
+let penColor = 0;
 let cooldown = 0;
 let bgColor = 220;
 
@@ -31,7 +31,7 @@ function setup() {
 
 function draw() {
   //change speed every frame and check for input
-  speed = (randomGaussian(3, 1) * random(-20, 200)) / 500;
+  speed = randomGaussian(3, 1) * random(-20, 200) / 500;
   checkInput();
 }
 
@@ -65,8 +65,8 @@ function checkInput() {
     }
 
   }
-  stroke(color);
-  fill(color);
+  stroke(penColor);
+  fill(penColor);
   circle(x, y, 2);
 }
 
@@ -86,8 +86,8 @@ function mousePressed() {
     firstClick = false;
   }
   else{
-   //click anywhere on screen to move cursor to mouse position
-   x = mouseX;
-   y = mouseY;
+    //click anywhere on screen to move cursor to mouse position
+    x = mouseX;
+    y = mouseY;
   }
 }
