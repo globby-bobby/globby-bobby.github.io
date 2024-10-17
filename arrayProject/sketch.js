@@ -137,6 +137,23 @@ function generateMaze() {
 
   let maze = [];
   let height = 0;
+  
+  for (let times = 0; times < 100; times++) {
+
+    let object = {
+      size: 1000,
+      x: round(random(-2,2)) * 1000,
+      y: 0,
+      z: 0,
+      angleX: 0,
+      angleY: 0,
+      angleZ: 0,
+      objectTexture: img,
+      shape: "plane",
+    };
+    maze.push(object);
+  };
+
   cube1 = {
 
     size: 1000,
@@ -202,21 +219,7 @@ function generateMaze() {
     shape: "plane",
   
   };
-  for (let times = 0; times < 10; times++) {
 
-    let object = {
-      size: 1000,
-      x: 0,
-      y: 0,
-      z: 1000 * times,
-      angleX: 0,
-      angleY: 0,
-      angleZ: 0,
-      objectTexture: img,
-      shape: "plane",
-    };
-    maze.push(object);
-  }
   maze.push(cube1);
   maze.push(cube2);
   maze.push(cube3);
