@@ -18,11 +18,13 @@ let moving = false;
 let moves = 0;
 
 const TURN_DEGREES = 90;
-const TURN_SPEED = 5;
-const MOVE_SPEED = 50;
+const TURN_SPEED = 2.5;
+const MOVE_SPEED = 25;
 const MOVE_TIMES = 1000 / MOVE_SPEED;
 
 const MAZE_SIZE = 10;
+
+const FRAMERATE = 60;
 
 let cam;
 
@@ -35,9 +37,9 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   cam = createCamera();
-  cam.setPosition(0, -0, 0);
+  cam.setPosition(0, 0, 0);
   cam.lookAt(0, 0, -20);
-  frameRate(30);
+  frameRate(FRAMERATE);
   //generateMaze();
   world = generateMaze();
   console.log(world);
@@ -82,7 +84,7 @@ function turnCamera() {
 }
 
 function moveCamera() {
-  if (moves <= MOVE_TIMES) {
+  if (moves <= MOVE_TIMES - 1) {
     console.log(moves);
     cam.move(0,0,-MOVE_SPEED);
     moves++;
@@ -112,9 +114,11 @@ function checkInput() {
 }
 
 function drawWorld() {
-  for (const obj in world) {
+  for (let obj in world) {
     let object = world[obj];
     let size = object.size;
+
+    resetMatrix();
 
     rotateX(radians(object.angleX));
     rotateY(radians(object.angleY));
@@ -138,75 +142,7 @@ function generateMaze() {
   let maze = [];
   let height = 0;
   
-  for (let times = 0; times < 100; times++) {
-
-    let object = {
-      size: 1000,
-      x: round(random(-2,2)) * 1000,
-      y: 0,
-      z: 0,
-      angleX: 0,
-      angleY: 0,
-      angleZ: 0,
-      objectTexture: img,
-      shape: "plane",
-    };
-    maze.push(object);
-  };
-
-  cube1 = {
-
-    size: 1000,
-    x: 0,
-    y: 0,
-    z: -500,
-    angleX: 0,
-    angleY: 0,
-    angleZ: 0,
-    objectTexture: img,
-    shape: "plane",
-  
-  };
-  cube2 = {
-
-    size: 1000,
-    x: 0,
-    y: 0,
-    z: 1000,
-    angleX: 0,
-    angleY: 0,
-    angleZ: 0,
-    objectTexture: img,
-    shape: "plane",
-  
-  };
-  cube3 = {
-
-    size: 1000,
-    x: 500,
-    y: 0,
-    z: -500,
-    angleX: 0,
-    angleY: 90,
-    angleZ: 0,
-    objectTexture: img,
-    shape: "plane",
-  
-  };
-  cube4 = {
-
-    size: 1000,
-    x: 0,
-    y: 0,
-    z: 1000,
-    angleX: 0,
-    angleY: 0,
-    angleZ: 0,
-    objectTexture: img,
-    shape: "plane",
-  
-  };
-  cube5 = {
+  ground = {
 
     size: 100000,
     x: 0,
@@ -220,11 +156,40 @@ function generateMaze() {
   
   };
 
-  maze.push(cube1);
-  maze.push(cube2);
-  maze.push(cube3);
-  maze.push(cube4);
-  maze.push(cube5);
+  maze.push(ground);
+
+  for (let times = 0; times < 15; times++) {
+
+    let object = {
+      size: 1000,
+      x: round(random(-2,2)) * 1000,
+      y: 0,//round(random(-2,2)) * 1000,
+      z: -1000,
+      angleX: 0,
+      angleY: 0,
+      angleZ: 0,
+      objectTexture: img,
+      shape: "plane",
+    };
+    maze.push(object);
+  };
+
+  for (let times = 0; times < 15; times++) {
+
+    let object = {
+      size: 1000,
+      x: round(random(-2,2)) * 1000 - 500,
+      y: 0,//round(random(-2,2)) * 1000,
+      z: 1500,
+      angleX: 0,
+      angleY: 90,
+      angleZ: 0,
+      objectTexture: img,
+      shape: "plane",
+    };
+    maze.push(object);
+  };
+
   console.log(maze);
   return maze;
 }
