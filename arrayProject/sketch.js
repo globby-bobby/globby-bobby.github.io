@@ -16,6 +16,8 @@ let cube1 = {};
 let cube2 = {};
 let world = [];
 let maze = [];
+let wallPositionArray0 = [];
+let wallPositionArray90 = [];
 let turningLeft = false;
 let turningRight = false;
 let leftTurns = 0;
@@ -28,14 +30,16 @@ const TURN_SPEED = 2.5;
 const MOVE_SPEED = 25;
 const MOVE_TIMES = 1000 / MOVE_SPEED;
 //must be odd
-const MAZE_SIZE = 30;
+const MAZE_SIZE = 3;
+//i called it lazymaze because it rhymes, and because it just places walls at random.
+let LAZYMAZE_WALL_COUNT;
 
 const FRAMERATE = 60;
 
 let cam;
 
 function preload() {
-
+  LAZYMAZE_WALL_COUNT = 1;// = round(MAZE_SIZE*(MAZE_SIZE/1.5));
   img = loadImage("background.png");
 
 }
@@ -57,7 +61,7 @@ function setup() {
 function draw() {
   orbitControl();
   background(0);
-  //noStroke();
+  noStroke();
   
   if (turningLeft || turningRight) {
     turnCamera();
@@ -95,14 +99,21 @@ function turnCamera() {
 
 function moveCamera() {
   //move camera by MOVE_SPEED and increase moves counter until it reaches MOVE_TIMES
-  if (moves <= MOVE_TIMES - 1) {
-    console.log(moves);
+  if (moves <= MOVE_TIMES - 1 ) {
+    for (let item in world) {
+      let target = world[item];
+      if (target.x === round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 4)) {
+        console.log("wow");
+      }
+    }
     cam.move(0,0,-MOVE_SPEED);
+    //console.log(round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 2));
     moves++;
   }
   else {
     //reset move counter and allow camera to move again
     moves = 0;
+    console.log(round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 2));
     moving = false;
   }
 }
@@ -154,23 +165,36 @@ function drawWorld() {
 function generateMaze() {
   //generate maze for player to navigate
   let maze = generateEdge();
-  let height = 0;
-  
-  ground = {
-
-    size: 100000,
-    x: 0,
-    y: 0,
-    z: -500,
-    angleX: 90,
-    angleY: 0,
-    angleZ: 0,
-    objectTexture: img,
-    shape: "plane",
-  
+  for (let times = 0; times < LAZYMAZE_WALL_COUNT; times++) {
+    let object = {
+      size: 1000,
+      x: round(random(-MAZE_SIZE/2, MAZE_SIZE/2)) * 1000,
+      y: 0,
+      z: round(random(-MAZE_SIZE/2, MAZE_SIZE/2)) * 1000 - 500,
+      angleX: 0,
+      angleY: 0,
+      angleZ: 0,
+      objectTexture: img,
+      shape: "plane",
+    };
+    maze.push(object);
   };
-  maze.push(ground);
-  console.log(maze);
+  
+  for (let times = 0; times < LAZYMAZE_WALL_COUNT; times++) {
+    let object = {
+      size: 1000,
+      x: round(random(-MAZE_SIZE/2, MAZE_SIZE/2)) * 1000,
+      y: 0,
+      z: round(random(-MAZE_SIZE/2, MAZE_SIZE/2)) * 1000 - 500,
+      angleX: 0,
+      angleY: 90,
+      angleZ: 0,
+      objectTexture: img,
+      shape: "plane",
+    };
+    maze.push(object);
+  };
+
   return maze;
 }
 
@@ -182,7 +206,7 @@ function generateEdge() {
     let object = {
       size: 1000,
       x: times * 1000,
-      y: 0,//round(random(-2,2)) * 1000,
+      y: 0,
       z: MAZE_SIZE/2 * -1000,
       angleX: 0,
       angleY: 0,
@@ -198,7 +222,7 @@ function generateEdge() {
     let object = {
       size: 1000,
       x: times * 1000,
-      y: 0,//round(random(-2,2)) * 1000,
+      y: 0,
       z: MAZE_SIZE/2 * 1000,
       angleX: 0,
       angleY: 0,
@@ -214,7 +238,7 @@ function generateEdge() {
     let object = {
       size: 1000,
       x: times * 1000,
-      y: 0,//round(random(-2,2)) * 1000,
+      y: 0,
       z:  MAZE_SIZE/2 * -1000,
       angleX: 0,
       angleY: 90,
@@ -230,7 +254,7 @@ function generateEdge() {
     let object = {
       size: 1000,
       x: times * 1000,
-      y: 0,//round(random(-2,2)) * 1000,
+      y: 0,
       z:  MAZE_SIZE/2 * 1000,
       angleX: 0,
       angleY: 90,
@@ -240,7 +264,17 @@ function generateEdge() {
     };
     maze.push(object);
   };
-
+  //check object x position and add it to wallPositionArray based on if they have an y angle of 90 or not
+  for (let item in maze) {
+    let target = maze[item];
+    if (target.angleY === 0) {
+      wallPositionArray0.push(target.x/4);
+    }
+    else{
+      wallPositionArray90.push(target.x/4);
+    }
+  }
+  console.log(wallPositionArray0);
   return maze;
 
 }
