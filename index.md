@@ -7,4 +7,5 @@
 
 ## Projects
 -[Etch-A-Sketch](example)
+-[Maze](arrayProject)
 
