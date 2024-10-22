@@ -24,13 +24,16 @@ let leftTurns = 0;
 let rightTurns = 0;
 let moving = false;
 let moves = 0;
+let direction;
+let forwardX;
+let forwardY;
 
 const TURN_DEGREES = 90;
 const TURN_SPEED = 2.5;
 const MOVE_SPEED = 25;
 const MOVE_TIMES = 1000 / MOVE_SPEED;
 //must be odd
-const MAZE_SIZE = 3;
+const MAZE_SIZE = 9;
 //i called it lazymaze because it rhymes, and because it just places walls at random.
 let LAZYMAZE_WALL_COUNT;
 
@@ -54,7 +57,6 @@ function setup() {
   frameRate(FRAMERATE);
   //generateMaze();
   world = generateMaze();
-  console.log(world);
 
 }
 
@@ -62,14 +64,13 @@ function draw() {
   orbitControl();
   background(0);
   noStroke();
-  
   if (turningLeft || turningRight) {
     turnCamera();
   }
   if (moving) {
     moveCamera();
   }
-
+  //console.log(round(cam.centerX - cam.eyeX));
   checkInput();
   drawWorld();
 }
@@ -100,10 +101,11 @@ function turnCamera() {
 function moveCamera() {
   //move camera by MOVE_SPEED and increase moves counter until it reaches MOVE_TIMES
   if (moves <= MOVE_TIMES - 1 ) {
+    if (frontIsBlocked()) {}
     for (let item in world) {
       let target = world[item];
       if (target.x === round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 4)) {
-        console.log("wow");
+        //return;
       }
     }
     cam.move(0,0,-MOVE_SPEED);
@@ -113,8 +115,32 @@ function moveCamera() {
   else {
     //reset move counter and allow camera to move again
     moves = 0;
-    console.log(round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 2));
+    //console.log(round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 2));
     moving = false;
+  }
+}
+
+function frontIsBlocked() {
+  //player is moving along Y axis
+  if (round(cam.centerX - cam.eyeX) === 20 || round(cam.centerX - cam.eyeX) === -20) {
+    forwardY = round((cam.eyeY + MOVE_SPEED*MOVE_TIMES - 1000) / 2);
+    forwardX = cam.eyeX;
+    direction = "Y";
+  }
+  //moving along X axis
+  else{
+    forwardX = round((cam.eyeX + MOVE_SPEED*MOVE_TIMES - 1000) / 2);
+    forwardY = cam.eyeY;
+    direction = "X";
+  }
+  console.log(direction);
+  for (let item in world) {
+    let target = world[item];
+    if (direction === "X") {
+      if (target.X + 500 === forwardX && target === forwardY) {
+        console.log("blocked");
+      }
+    }
   }
 }
 
