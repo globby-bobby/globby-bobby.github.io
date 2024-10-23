@@ -63,7 +63,7 @@ function setup() {
   createCanvas(windowWidth,windowHeight, WEBGL);
   pixelDensity(PIXEL_DENSITY);
   //randomize maze size and make sure number is odd by adding 1 if number is even
-  mazeSize = round(random(7,22))
+  mazeSize = round(random(7,22));
   if (mazeSize % 2 === 0) {
     mazeSize++;
   }
@@ -204,10 +204,10 @@ function drawWorld() {
     texture(img);
     //randomly flash different brightness of textures
     if (round(random(0,10000)) === 75) {
-      texture(img2)
+      texture(img2);
     }
     if (round(random(0,10000)) === 25) {
-      texture(img2)
+      texture(img2);
     }
 
     if (world[obj].shape === "plane") {
