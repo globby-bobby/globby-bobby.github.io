@@ -10,14 +10,33 @@ let canvas;
 let tile;
 let background;
 let banner;
-let gameState = "menu";
+let cannon;
+let gameState = "game1";
 
 let bannerX = -1152;
+let playerX = 6;
+let playerY = 1;
+
+// let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+//             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+//             [1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
+//             [1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],
+//             [1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],
+//             [1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1],
+//             [1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],
+//             [1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],
+//             [1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
+//             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+//             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+//           ];
+
+let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
   tile = loadImage('wall.png');
   background = loadImage('background.png');
   banner = loadImage('banner.png');
+  cannon = loadImage('player.png');
   //bannerX = -banner.width*2;
 }
 
@@ -41,12 +60,8 @@ function checkGameState() {
     moveBanner();
   }
   if (gameState === "game1") {
-    
-    for (let x = 0; x < width; x += width/16) {
-      for (let y = 0; y < height-height/8; y += width/16) {
-        image(tile,x,y,width/16,width/16);
-      }
-    }
+    drawMap();
+    drawPlayer();
   }
 }
 
@@ -58,4 +73,23 @@ function moveBanner() {
     }
     bannerX += banner.width/8 + 8;
   }
+}
+
+function drawMap() {
+  let arrayX = -1;
+  let arrayY = -1;
+  for (let y = 0; y < height-height/8; y += width/16) {
+    arrayX = -1;
+    arrayY++;
+    for (let x = 0; x < width; x += width/16) {
+      arrayX++;
+      if (grid[arrayY][arrayX] === 1) {
+        image(tile,x,y,width/16,width/16);
+      }
+    }
+  }
+}
+
+function drawPlayer() {
+  image(cannon,playerX*64,playerY*64,width/16,width/16);
 }
