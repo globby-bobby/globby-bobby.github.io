@@ -6,15 +6,21 @@
 // - describe what you did to take this project "above and beyond"
 
 let canvas;
+const FRAMERATE = 2;
 
 let tile;
 let background;
 let banner;
 let cannon;
 let gameState = "game1";
+let bombs = [];
+let playerMoveRequest;
+
+//0 is player's turn, 1 is player aiming, 2 is bot's turn, 3 is bot's aiming
+let gameTurn = 0;
 
 let bannerX = -1152;
-let playerX = 6;
+let playerX = 1;
 let playerY = 1;
 
 // let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -49,8 +55,14 @@ function setup() {
 
 function draw() {
   noSmooth();
-  image(background,0,0,width,height);
   checkGameState();
+  checkInput();
+  image(background,0,0,width,height);
+  drawMap();
+  drawPlayer();
+  if (frameCount % 30 === 0) {
+    moveEntities();
+  }
 }
 
 function checkGameState() {
@@ -60,8 +72,49 @@ function checkGameState() {
     moveBanner();
   }
   if (gameState === "game1") {
-    drawMap();
-    drawPlayer();
+
+  }
+}
+
+function moveEntities() {
+  if (playerMoveRequest != "none" && gameTurn === 0) {
+    if (playerMoveRequest === "right") {
+      playerX++;
+      gameTurn++;
+      playerMoveRequest = "none";
+    }
+    if (playerMoveRequest === "left") {
+      playerX--;
+      gameTurn++;
+      playerMoveRequest = "none";
+    }
+    if (playerMoveRequest === "up") {
+      playerY--;
+      gameTurn++;
+      playerMoveRequest = "none";
+    }
+    if (playerMoveRequest === "down") {
+      playerY++;
+      gameTurn++;
+      playerMoveRequest = "none";
+    }
+  }
+}
+
+function checkInput() {
+  if (keyIsPressed) {
+    if (keyIsDown(RIGHT_ARROW)) {
+      playerMoveRequest = "right"
+    };
+    if (keyIsDown(LEFT_ARROW)) {
+      playerMoveRequest = "left"
+    };
+    if (keyIsDown(UP_ARROW)) {
+      playerMoveRequest = "up"
+    };
+    if (keyIsDown(DOWN_ARROW)) {
+      playerMoveRequest = "down"
+    };
   }
 }
 
@@ -84,6 +137,7 @@ function drawMap() {
     for (let x = 0; x < width; x += width/16) {
       arrayX++;
       if (grid[arrayY][arrayX] === 1) {
+        noSmooth();
         image(tile,x,y,width/16,width/16);
       }
     }
@@ -91,5 +145,5 @@ function drawMap() {
 }
 
 function drawPlayer() {
-  image(cannon,playerX*64,playerY*64,width/16,width/16);
+  image(cannon,(1+playerX*width/16)-1,(1+playerY*width/16)-1,width/16,width/16);
 }
