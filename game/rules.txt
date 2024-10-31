@@ -1,0 +1,11 @@
+First turn player moves
+You may move in any of the four directions (left, right, up, down)
+Second turn player can move or shoot
+If shooting, hit ENTER
+Press arrow keys to aim projectile
+Press ENTER to lock in aiming
+Use left and right arrows to select how much ammo you will use
+Every ammo adds +1 radius to the bomb's explosion
+When out of ammo, you must wait 2 turns (2 moves) to regen one ammo
+After moving 15 times, your third ammo slot is replaced by the NUKE
+The nuke's explosion has a radius of 4 tiles and destroys any nearby destructable tiles
