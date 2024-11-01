@@ -60,21 +60,34 @@ function setup() {
   canvas = createCanvas(windowHeight/3*4, windowHeight);
   //shake left and right when bomb's explosion 'ticks'
   canvas.position((windowWidth-width)/2,0);
+  pixelDensity(5);
   console.log(width,height,banner.width);
 
 }
 
 function draw() {
-  //console.log(playerX,playerY,grid[playerY][playerX]);
+  console.log(gameTurn);
   noSmooth();
-  findPlayerLocation();
+  //checkPlayerLocation();
+  //console.log(round(random(0,2)));
   checkGameState();
-  checkInput();
   image(background,0,0,width,height);
   drawMap();
   drawPlayers();
+  checkGameTurn();
   if (frameCount % 30 === 0) {
+    //buffer player movements every 15 frames to 'fake' low framerate (it takes 30 frames to change player positions)
     moveEntities();
+  }
+}
+
+function checkGameTurn() {
+  //player movement turn
+  if (gameTurn === 0) {
+    checkInput();
+  }
+  else if (gameTurn === 1) {
+    checkPlayerLocation();
   }
 }
 
@@ -89,14 +102,81 @@ function checkGameState() {
   }
 }
 
-function changeGameState() {
-
+function changeGameTurn(turnChange) {
+  gameTurn = turnChange;
 }
 
-function findPlayerLocation() {
+function checkPlayerLocation() {
+  //enemy looks where player is and attempts to move towards them
+  //console.log(distanceX,distanceY);
   let distanceX = enemyX-playerX;
   let distanceY = enemyY-playerY;
-  console.log(distanceX,distanceY);
+  let moveDirectionX;
+  let moveDirectionY;
+  if (distanceX > 0) {
+    console.log("left");
+    moveDirectionX = "left";
+  }
+  if (distanceX < 0) {
+    console.log("right");
+    moveDirectionX = "right";
+  }
+  if (distanceX === 0) {
+    console.log("center")
+    moveDirectionX = "none";
+  }
+  if (distanceY > 0) {
+    console.log("above");
+    moveDirectionY = "left";
+  }
+  if (distanceY < 0) {
+    console.log("below");
+    moveDirectionY = "right";
+  }
+  if (distanceY === 0) {
+    console.log("center")
+    moveDirectionY = "none";
+  }
+  moveTowardsPlayer(moveDirectionX,moveDirectionY);
+}
+
+function moveTowardsPlayer(moveDirectionX,moveDirectionY) {
+  if (random(round(0,2)) !== 1) {
+    console.log(moveDirectionX)
+    //enemy is more likely to move sideways, since map is larger horizontally
+    if (moveDirectionX === 'left') {
+      console.log("here");
+      if (grid[enemyY][enemyX-1] === 0) {
+        enemyX--;
+        changeGameTurn(2);
+      }
+    }
+    if (moveDirectionX === 'right') {
+      console.log("here2");
+      if (grid[enemyY][enemyX+1] === 0) {
+        enemyX++;
+        changeGameTurn(2);
+      }
+    }
+    changeGameTurn(0);
+  }
+  else {
+    console("raer")
+    if (moveDirectionY === 'above') {
+      console.log("here");
+      if (grid[enemyY-1][enemyX] === 0) {
+        enemyY--;
+        changeGameTurn(2);
+      }
+    }
+    if (moveDirectionY === 'below') {
+      console.log("here2");
+      if (grid[enemyY+1][enemyX] === 0) {
+        enemyY++;
+        changeGameTurn(2);
+      }
+    }
+  }
 }
 
 function moveEntities() {
@@ -105,28 +185,28 @@ function moveEntities() {
       if (grid[playerY][playerX+1] === 0) {
         playerX++;
         playerMoveRequest = "none";
-        changeGameState();
+        changeGameTurn(1);
       }
     }
     if (playerMoveRequest === "left") {
       if (grid[playerY][playerX-1] === 0) {
         playerX--;
         playerMoveRequest = "none";
-        changeGameState();
+        changeGameTurn(1);
       }
     }
     if (playerMoveRequest === "up") {
       if (grid[playerY-1][playerX] === 0) {
         playerY--;
         playerMoveRequest = "none";
-        changeGameState();
+        changeGameTurn(1);
       }
     }
     if (playerMoveRequest === "down") {
       if (grid[playerY+1][playerX] === 0) {
         playerY++;
         playerMoveRequest = "none";
-        changeGameState();
+        changeGameTurn(1);
       }
     }
   }
@@ -168,11 +248,11 @@ function drawMap() {
     for (let x = 0; x < width; x += width/16) {
       arrayX++;
       if (grid[arrayY][arrayX] === 1) {
-        noSmooth();
+        //noSmooth();
         image(tile,x,y,width/16,width/16);
       }
       if (grid[arrayY][arrayX] === 2) {
-        noSmooth();
+        //noSmooth();
         image(breakableTile,x,y,width/16,width/16);
       }
     }
