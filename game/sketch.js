@@ -17,6 +17,7 @@ let enemyCannon;
 let gameState = "game1";
 let bombs = [];
 let playerMoveRequest;
+let enemyMovementDirection;
 
 //0 is player's turn, 1 is player aiming, 2 is bot's turn, 3 is bot's aiming
 let gameTurn = 0;
@@ -30,6 +31,7 @@ let playerX = 1;
 let playerY = 1;
 let enemyX = 14;
 let enemyY = 9;
+let enemyMovements;
 
 // let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
@@ -66,10 +68,8 @@ function setup() {
 }
 
 function draw() {
-  console.log(gameTurn);
   noSmooth();
   //checkPlayerLocation();
-  //console.log(round(random(0,2)));
   checkGameState();
   image(background,0,0,width,height);
   drawMap();
@@ -88,6 +88,9 @@ function checkGameTurn() {
   }
   else if (gameTurn === 1) {
     checkPlayerLocation();
+  }
+  else if (gameTurn === 2) {
+    gameTurn = 0;
   }
 }
 
@@ -113,69 +116,119 @@ function checkPlayerLocation() {
   let distanceY = enemyY-playerY;
   let moveDirectionX;
   let moveDirectionY;
+  enemyMovements = 0;
   if (distanceX > 0) {
-    console.log("left");
+    //console.log("left");
     moveDirectionX = "left";
   }
   if (distanceX < 0) {
-    console.log("right");
+    //console.log("right");
     moveDirectionX = "right";
   }
   if (distanceX === 0) {
-    console.log("center")
+    //console.log("center");
     moveDirectionX = "none";
   }
   if (distanceY > 0) {
-    console.log("above");
-    moveDirectionY = "left";
+    //console.log("above");
+    moveDirectionY = "above";
   }
   if (distanceY < 0) {
-    console.log("below");
-    moveDirectionY = "right";
+    //console.log("below");
+    moveDirectionY = "below";
   }
   if (distanceY === 0) {
-    console.log("center")
+    //console.log("center");
     moveDirectionY = "none";
   }
-  moveTowardsPlayer(moveDirectionX,moveDirectionY);
+  moveTowardsPlayer(moveDirectionX,moveDirectionY,'none');
 }
 
-function moveTowardsPlayer(moveDirectionX,moveDirectionY) {
-  if (random(round(0,2)) !== 1) {
-    console.log(moveDirectionX)
+function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
+  enemyMovements++;
+  console.log(enemyMovements);
+  //if (enemyMovements === 5) {
+    //if enemy gets stuck, move randomly (lazy solution)
+    //moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+  //}
+  if (round(random(0,1)) !== 1 || preference === 'horizontal') {
+    //console.log(moveDirectionX);
     //enemy is more likely to move sideways, since map is larger horizontally
     if (moveDirectionX === 'left') {
-      console.log("here");
+      console.log('left');
       if (grid[enemyY][enemyX-1] === 0) {
         enemyX--;
         changeGameTurn(2);
       }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+      }
     }
     if (moveDirectionX === 'right') {
-      console.log("here2");
+      console.log('right');
       if (grid[enemyY][enemyX+1] === 0) {
         enemyX++;
         changeGameTurn(2);
       }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+      }
     }
-    changeGameTurn(0);
+    if (moveDirectionX === 'center') {
+      //if on the same X level as player, retry function with a prefrence of moving horizontally
+      //this actually works, even though I thought it would stick the enemy in a loop of never moving
+      console.log('retry X');
+      moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+    }
+    //changeGameTurn(0);
+  }
+  else if (preference === 'random') {
+    let randomDirectionX = round(random(0,1));
+    let randomDirectionY = round(random(0,1));
+    if (randomDirectionX === 0) {
+      randomDirectionX = -1;
+    }
+    if (randomDirectionY === 0) {
+      randomDirectionY = -1;
+    }
+    if (grid[enemyY+randomDirectionY][enemyX+randomDirectionX] === 0) {
+      enemyX--;
+      changeGameTurn(2);
+    }
   }
   else {
-    console("raer")
     if (moveDirectionY === 'above') {
-      console.log("here");
+      console.log('up');
       if (grid[enemyY-1][enemyX] === 0) {
         enemyY--;
         changeGameTurn(2);
       }
+      else {
+        if (enemyMovements > 4) {
+          if (grid[enemyY+1][enemyX] === 0) {
+            enemyY++;
+            changeGameTurn(2);
+          }
+        }
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+      }
     }
     if (moveDirectionY === 'below') {
-      console.log("here2");
+      console.log('down');
       if (grid[enemyY+1][enemyX] === 0) {
         enemyY++;
         changeGameTurn(2);
       }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+      }
+      if (moveDirectionY === 'center') {
+        //if on the same Y level as player, retry function with a prefrence of moving vertically
+        console.log('retry Y');
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+      }
     }
+    //changeGameTurn(0);
   }
 }
 
