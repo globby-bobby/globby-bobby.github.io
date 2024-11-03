@@ -32,6 +32,8 @@ let playerY = 1;
 let enemyX = 14;
 let enemyY = 9;
 let enemyMovements;
+let enemyMoveMode = 'default';
+let enemyTurnsUntiSwitch = 5;
 
 // let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
@@ -106,6 +108,9 @@ function checkGameState() {
 }
 
 function changeGameTurn(turnChange) {
+  if (turnChange === 2) {
+    enemyTurnsUntiSwitch++;
+  }
   gameTurn = turnChange;
 }
 
@@ -141,19 +146,19 @@ function checkPlayerLocation() {
     //console.log("center");
     moveDirectionY = "none";
   }
-  moveTowardsPlayer(moveDirectionX,moveDirectionY,'none');
+  moveTowardsPlayer(moveDirectionX,moveDirectionY,'none',enemyMoveMode);
 }
 
 function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
   enemyMovements++;
   console.log(enemyMovements);
-  //if (enemyMovements === 5) {
+  if (enemyMovements === 5) {
     //if enemy gets stuck, move randomly (lazy solution)
-    //moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-  //}
+    moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+  }
+  // if (enemyMoveMode === 'default');
   if (round(random(0,1)) !== 1 || preference === 'horizontal') {
     //console.log(moveDirectionX);
-    //enemy is more likely to move sideways, since map is larger horizontally
     if (moveDirectionX === 'left') {
       console.log('left');
       if (grid[enemyY][enemyX-1] === 0) {
@@ -182,18 +187,43 @@ function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
     }
     //changeGameTurn(0);
   }
-  else if (preference === 'random') {
-    let randomDirectionX = round(random(0,1));
-    let randomDirectionY = round(random(0,1));
-    if (randomDirectionX === 0) {
-      randomDirectionX = -1;
+  else if (preference === 'random' || round(random(0,16)) === 16) {
+    let randomEnemyMoveDirection = round(random(0,3));
+    if (randomEnemyMoveDirection === 0) {
+      if (grid[enemyY][enemyX-1] === 0) {
+        enemyX--;
+        changeGameTurn(2);
+      }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+      }
     }
-    if (randomDirectionY === 0) {
-      randomDirectionY = -1;
+    if (randomEnemyMoveDirection === 1) {
+      if (grid[enemyY][enemyX+1] === 0) {
+        enemyX++;
+        changeGameTurn(2);
+      }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+      }
     }
-    if (grid[enemyY+randomDirectionY][enemyX+randomDirectionX] === 0) {
-      enemyX--;
-      changeGameTurn(2);
+    if (randomEnemyMoveDirection === 2) {
+      if (grid[enemyY-1][enemyX] === 0) {
+        enemyY--;
+        changeGameTurn(2);
+      }
+      else {
+        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+      }
+      if (randomEnemyMoveDirection === 2) {
+        if (grid[enemyY+1][enemyX] === 0) {
+          enemyY++;
+          changeGameTurn(2);
+        }
+        else {
+          moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+        }
+      }
     }
   }
   else {
