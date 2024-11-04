@@ -84,10 +84,13 @@ function draw() {
 }
 
 function checkGameTurn() {
+  //processes what functions need to be run during what turn
+  //turn 0 is player movement, 1 is player shooting, 2 is enemy movement, 3 is enemy shooting
   //player movement turn
   if (gameTurn === 0) {
     checkInput();
   }
+  //enemy movement turn
   else if (gameTurn === 1) {
     checkPlayerLocation();
   }
@@ -97,6 +100,7 @@ function checkGameTurn() {
 }
 
 function checkGameState() {
+  //checks the game state, not turn state, runs functions for things like moving the banner and displaying the world
   if (gameState === "logo") {
   }
   if (gameState === "menu") {
@@ -108,6 +112,7 @@ function checkGameState() {
 }
 
 function changeGameTurn(turnChange) {
+  //changes turn to turnChange although turns should always just be increasing by one
   if (turnChange === 2) {
     enemyTurnsUntiSwitch++;
   }
@@ -146,7 +151,75 @@ function checkPlayerLocation() {
     //console.log("center");
     moveDirectionY = "none";
   }
-  moveTowardsPlayer(moveDirectionX,moveDirectionY,'none',enemyMoveMode);
+  moveTowardsPlayer2(moveDirectionX,moveDirectionY);
+  //moveTowardsPlayer(moveDirectionX,moveDirectionY,'none',enemyMoveMode);
+}
+
+function moveTowardsPlayer2(moveDirectionX,moveDirectionY,mode) {
+  //stem theoretical path off of enemy position
+  //add node when changing directions
+  //move towards player until stuck, return to last node with a different direction
+  //return to last node if node exhausts all directions
+  let originNeighborSpaces = positionCheckOpenTiles(enemyX,enemyY);
+  let originNode = {
+    x: enemyX,
+    y: enemyY,
+    N: originNeighborSpaces[0],
+    E: originNeighborSpaces[1],
+    S: originNeighborSpaces[2],
+    W: originNeighborSpaces[3],
+  };
+  let nodeDirection = returnRandomDirection(originNode);
+  let pathfindingTileList = [];
+  let pathfindingNodeList = [originNode];
+  console.log(originNode, nodeDirection);
+
+}
+
+function returnRandomDirection(node) {
+  let openSpaceArray =[];
+  //if space is open, add that direction to openSpaceArray in a random position
+  if (node.N === true) {
+    openSpaceArray.splice((openSpaceArray.length+1) * Math.random() | 0, 0, "north");
+  }
+  if (node.E === true) {
+    openSpaceArray.splice((openSpaceArray.length+1) * Math.random() | 0, 0, "east");
+  }
+  if (node.S === true) {
+    openSpaceArray.splice((openSpaceArray.length+1) * Math.random() | 0, 0, "south");
+  }
+  if (node.W === true) {
+    openSpaceArray.splice((openSpaceArray.length+1) * Math.random() | 0, 0, "west");
+  }
+  //return the first direction in the list, which is random
+  return openSpaceArray[0];
+}
+
+function positionCheckOpenTiles(x,y) {
+  //return an array that checks what directions have an open space around the enemy
+  let leftOpen = false;
+  let rightOpen = false;
+  let upOpen = false;
+  let downOpen = false;
+  //check right
+  if (grid[y][x+1] === 0) {
+    rightOpen = true;
+  }
+  // check left
+  if (grid[y][x-1] === 0) {
+    leftOpen = true;
+  }
+  //check above
+  if (grid[y-1][x] === 0) {
+    upOpen = true;
+  }
+  //check below
+  if (grid[y+1][x] === 0) {
+    downOpen = true;
+  }
+  let directionList = [upOpen,rightOpen,downOpen,leftOpen];
+  //return directions in order of north,east,south,west
+  return directionList;
 }
 
 function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
@@ -263,6 +336,7 @@ function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
 }
 
 function moveEntities() {
+  //if successful, move the player and end their turn
   if (playerMoveRequest !== "none" && gameTurn === 0) {
     if (playerMoveRequest === "right") {
       if (grid[playerY][playerX+1] === 0) {
@@ -296,6 +370,7 @@ function moveEntities() {
 }
 
 function checkInput() {
+  //check the input for the player
   if (keyIsPressed) {
     if (keyIsDown(RIGHT_ARROW)) {
       playerMoveRequest = "right";
@@ -313,6 +388,7 @@ function checkInput() {
 }
 
 function moveBanner() {
+  //move the banner one tile over and reset it when it moves far enough
   image(banner,bannerX,0,width*2,width/16);
   if (frameCount % 30 === 0) {
     if (round(bannerX) === 0) {
@@ -323,6 +399,7 @@ function moveBanner() {
 }
 
 function drawMap() {
+  //draw the square tiles around the map and shove them in a list
   let arrayX = -1;
   let arrayY = -1;
   for (let y = 0; y < height-height/8; y += width/16) {
@@ -343,6 +420,7 @@ function drawMap() {
 }
 
 function drawPlayers() {
+  //draw the cannon characters using weird specific numbers that somehow work
   image(cannon,1+playerX*width/16-1,1+playerY*width/16-1,width/16,width/16);
   image(enemyCannon,1+enemyX*width/16-1,1+enemyY*width/16-1,width/16,width/16);
 }
