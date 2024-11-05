@@ -8,6 +8,8 @@
 let canvas;
 const FRAMERATE = 2;
 
+let debug = true;
+
 let tile;
 let breakableTile;
 let background;
@@ -35,6 +37,9 @@ let enemyMovements;
 let enemyMoveMode = 'default';
 let enemyTurnsUntiSwitch = 5;
 
+let pathfindingTileList = [];
+let pathfindingNodeList = [];
+
 // let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
 //             [1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
@@ -47,7 +52,9 @@ let enemyTurnsUntiSwitch = 5;
 //             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
 //             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //           ];
-
+//test grid that is completely empty
+//let grid = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],];
+//0 is open space, 1 is wall, 2 is destructable wall
 let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
@@ -75,6 +82,9 @@ function draw() {
   checkGameState();
   image(background,0,0,width,height);
   drawMap();
+  if (debug) {
+    drawPathfindingTiles();
+  }
   drawPlayers();
   checkGameTurn();
   if (frameCount % 30 === 0) {
@@ -151,16 +161,16 @@ function checkPlayerLocation() {
     //console.log("center");
     moveDirectionY = "none";
   }
-  moveTowardsPlayer2(moveDirectionX,moveDirectionY);
+  initMoveTowardsPlayer(moveDirectionX,moveDirectionY);
   //moveTowardsPlayer(moveDirectionX,moveDirectionY,'none',enemyMoveMode);
 }
 
-function moveTowardsPlayer2(moveDirectionX,moveDirectionY,mode) {
+function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   //stem theoretical path off of enemy position
-  //add node when changing directions
+  //add node when changing directions or when multiple are open
   //move towards player until stuck, return to last node with a different direction
   //return to last node if node exhausts all directions
-  let originNeighborSpaces = positionCheckOpenTiles(enemyX,enemyY);
+  let originNeighborSpaces = fromPositionCheckOpenTiles(enemyX,enemyY);
   let originNode = {
     x: enemyX,
     y: enemyY,
@@ -170,10 +180,28 @@ function moveTowardsPlayer2(moveDirectionX,moveDirectionY,mode) {
     W: originNeighborSpaces[3],
   };
   let nodeDirection = returnRandomDirection(originNode);
-  let pathfindingTileList = [];
-  let pathfindingNodeList = [originNode];
-  console.log(originNode, nodeDirection);
+  pathfindingTileList = [];
+  pathfindingNodeList = [originNode];
+  //pathfinding tiles nodes are sorted left to right based on order of first to last
+  //console.log(originNode, nodeDirection, directionsToNumber(originNode));
+  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0]);
 
+}
+
+function moveTowardsPlayer(nodeDirection,currentTile) {
+  if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0) {
+    let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1);
+    let node = {
+      x: currentTile.x,
+      y: currentTile.y-1,
+      N: originNeighborSpaces[0],
+      E: originNeighborSpaces[1],
+      S: originNeighborSpaces[2],
+      W: originNeighborSpaces[3],
+    };
+    pathfindingTileList.push(node);
+    //console.log(pathfindingTileList);
+  }
 }
 
 function returnRandomDirection(node) {
@@ -195,7 +223,25 @@ function returnRandomDirection(node) {
   return openSpaceArray[0];
 }
 
-function positionCheckOpenTiles(x,y) {
+function directionsToNumber(node) {
+  let directionCount = 0;
+  //add 1 to directionCount if space is open
+  if (node.N === true) {
+    directionCount++;
+  }
+  if (node.E === true) {
+    directionCount++;
+  }
+  if (node.S === true) {
+    directionCount++;
+  }
+  if (node.W === true) {
+    directionCount++;
+  }
+  return directionCount;
+}
+
+function fromPositionCheckOpenTiles(x,y) {
   //return an array that checks what directions have an open space around the enemy
   let leftOpen = false;
   let rightOpen = false;
@@ -222,118 +268,134 @@ function positionCheckOpenTiles(x,y) {
   return directionList;
 }
 
-function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
-  enemyMovements++;
-  console.log(enemyMovements);
-  if (enemyMovements === 5) {
-    //if enemy gets stuck, move randomly (lazy solution)
-    moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+function drawPathfindingTiles() {
+  for (let node in pathfindingNodeList) {
+    node = pathfindingNodeList[node];
+    fill(255,115,0);
+    noStroke();
+    square(1+node.x*width/16-1,1+node.y*width/16-1,width/16);
   }
-  // if (enemyMoveMode === 'default');
-  if (round(random(0,1)) !== 1 || preference === 'horizontal') {
-    //console.log(moveDirectionX);
-    if (moveDirectionX === 'left') {
-      console.log('left');
-      if (grid[enemyY][enemyX-1] === 0) {
-        enemyX--;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-      }
-    }
-    if (moveDirectionX === 'right') {
-      console.log('right');
-      if (grid[enemyY][enemyX+1] === 0) {
-        enemyX++;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-      }
-    }
-    if (moveDirectionX === 'center') {
-      //if on the same X level as player, retry function with a prefrence of moving horizontally
-      //this actually works, even though I thought it would stick the enemy in a loop of never moving
-      console.log('retry X');
-      moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-    }
-    //changeGameTurn(0);
-  }
-  else if (preference === 'random' || round(random(0,16)) === 16) {
-    let randomEnemyMoveDirection = round(random(0,3));
-    if (randomEnemyMoveDirection === 0) {
-      if (grid[enemyY][enemyX-1] === 0) {
-        enemyX--;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-      }
-    }
-    if (randomEnemyMoveDirection === 1) {
-      if (grid[enemyY][enemyX+1] === 0) {
-        enemyX++;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-      }
-    }
-    if (randomEnemyMoveDirection === 2) {
-      if (grid[enemyY-1][enemyX] === 0) {
-        enemyY--;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-      }
-      if (randomEnemyMoveDirection === 2) {
-        if (grid[enemyY+1][enemyX] === 0) {
-          enemyY++;
-          changeGameTurn(2);
-        }
-        else {
-          moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-        }
-      }
-    }
-  }
-  else {
-    if (moveDirectionY === 'above') {
-      console.log('up');
-      if (grid[enemyY-1][enemyX] === 0) {
-        enemyY--;
-        changeGameTurn(2);
-      }
-      else {
-        if (enemyMovements > 4) {
-          if (grid[enemyY+1][enemyX] === 0) {
-            enemyY++;
-            changeGameTurn(2);
-          }
-        }
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-      }
-    }
-    if (moveDirectionY === 'below') {
-      console.log('down');
-      if (grid[enemyY+1][enemyX] === 0) {
-        enemyY++;
-        changeGameTurn(2);
-      }
-      else {
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-      }
-      if (moveDirectionY === 'center') {
-        //if on the same Y level as player, retry function with a prefrence of moving vertically
-        console.log('retry Y');
-        moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-      }
-    }
-    //changeGameTurn(0);
+  for (let tile in pathfindingTileList) {
+    tile = pathfindingTileList[tile];
+    //console.log(tile);
+    fill(225,225,0);
+    noStroke();
+    square(1+tile.x*width/16-1,1+tile.y*width/16-1,width/16);
   }
 }
+
+// function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
+//   enemyMovements++;
+//   console.log(enemyMovements);
+//   if (enemyMovements === 5) {
+//     //if enemy gets stuck, move randomly (lazy solution)
+//     moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+//   }
+//   // if (enemyMoveMode === 'default');
+//   if (round(random(0,1)) !== 1 || preference === 'horizontal') {
+//     //console.log(moveDirectionX);
+//     if (moveDirectionX === 'left') {
+//       console.log('left');
+//       if (grid[enemyY][enemyX-1] === 0) {
+//         enemyX--;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+//       }
+//     }
+//     if (moveDirectionX === 'right') {
+//       console.log('right');
+//       if (grid[enemyY][enemyX+1] === 0) {
+//         enemyX++;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+//       }
+//     }
+//     if (moveDirectionX === 'center') {
+//       //if on the same X level as player, retry function with a prefrence of moving horizontally
+//       //this actually works, even though I thought it would stick the enemy in a loop of never moving
+//       console.log('retry X');
+//       moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+//     }
+//     //changeGameTurn(0);
+//   }
+//   else if (preference === 'random' || round(random(0,16)) === 16) {
+//     let randomEnemyMoveDirection = round(random(0,3));
+//     if (randomEnemyMoveDirection === 0) {
+//       if (grid[enemyY][enemyX-1] === 0) {
+//         enemyX--;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+//       }
+//     }
+//     if (randomEnemyMoveDirection === 1) {
+//       if (grid[enemyY][enemyX+1] === 0) {
+//         enemyX++;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+//       }
+//     }
+//     if (randomEnemyMoveDirection === 2) {
+//       if (grid[enemyY-1][enemyX] === 0) {
+//         enemyY--;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+//       }
+//       if (randomEnemyMoveDirection === 2) {
+//         if (grid[enemyY+1][enemyX] === 0) {
+//           enemyY++;
+//           changeGameTurn(2);
+//         }
+//         else {
+//           moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
+//         }
+//       }
+//     }
+//   }
+//   else {
+//     if (moveDirectionY === 'above') {
+//       console.log('up');
+//       if (grid[enemyY-1][enemyX] === 0) {
+//         enemyY--;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         if (enemyMovements > 4) {
+//           if (grid[enemyY+1][enemyX] === 0) {
+//             enemyY++;
+//             changeGameTurn(2);
+//           }
+//         }
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+//       }
+//     }
+//     if (moveDirectionY === 'below') {
+//       console.log('down');
+//       if (grid[enemyY+1][enemyX] === 0) {
+//         enemyY++;
+//         changeGameTurn(2);
+//       }
+//       else {
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
+//       }
+//       if (moveDirectionY === 'center') {
+//         //if on the same Y level as player, retry function with a prefrence of moving vertically
+//         console.log('retry Y');
+//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
+//       }
+//     }
+//     //changeGameTurn(0);
+//   }
+// }
 
 function moveEntities() {
   //if successful, move the player and end their turn
