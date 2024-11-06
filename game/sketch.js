@@ -184,12 +184,40 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   pathfindingNodeList = [originNode];
   //pathfinding tiles nodes are sorted left to right based on order of first to last
   //console.log(originNode, nodeDirection, directionsToNumber(originNode));
-  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0]);
+  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false);
 
 }
 
-function moveTowardsPlayer(nodeDirection,currentTile) {
-  if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0) {
+function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode) {
+  //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
+
+  if (nodeDirection === 'south' && grid[currentTile.y+1][currentTile.x] === 0 && !pathingTileIsNode) {
+    for (let tile in pathfindingTileList) {
+      tile = pathfindingTileList[tile];
+      if (currentTile.y+1 === tile.y) {
+        break;
+      }
+    }
+    let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y+1);
+    let node = {
+      x: currentTile.x,
+      y: currentTile.y+1,
+      N: originNeighborSpaces[0],
+      E: originNeighborSpaces[1],
+      S: originNeighborSpaces[2],
+      W: originNeighborSpaces[3],
+    };
+    pathfindingTileList.push(node);
+    moveTowardsPlayer('south',pathfindingTileList[0], false);
+    //console.log(pathfindingTileList);
+  }
+  if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0 && !pathingTileIsNode) {
+    for (let tile in pathfindingTileList) {
+      tile = pathfindingTileList[tile];
+      if (currentTile.y-1 === tile.y) {
+        break;
+      }
+    }
     let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1);
     let node = {
       x: currentTile.x,
@@ -200,6 +228,7 @@ function moveTowardsPlayer(nodeDirection,currentTile) {
       W: originNeighborSpaces[3],
     };
     pathfindingTileList.push(node);
+    moveTowardsPlayer('north',pathfindingTileList[0], false);
     //console.log(pathfindingTileList);
   }
 }
@@ -224,6 +253,7 @@ function returnRandomDirection(node) {
 }
 
 function directionsToNumber(node) {
+  //returns a number from 0 to 4 depending on how many open directions are found
   let directionCount = 0;
   //add 1 to directionCount if space is open
   if (node.N === true) {
@@ -269,6 +299,7 @@ function fromPositionCheckOpenTiles(x,y) {
 }
 
 function drawPathfindingTiles() {
+  //draw pathing tiles, orange are checkpoint nodes, yellow are straight lines of tiles
   for (let node in pathfindingNodeList) {
     node = pathfindingNodeList[node];
     fill(255,115,0);
