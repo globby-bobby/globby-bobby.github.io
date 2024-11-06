@@ -9,6 +9,7 @@ let canvas;
 const FRAMERATE = 2;
 
 let debug = true;
+const pathfindingTurnRandom = true;
 
 let tile;
 let breakableTile;
@@ -184,52 +185,154 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   pathfindingNodeList = [originNode];
   //pathfinding tiles nodes are sorted left to right based on order of first to last
   //console.log(originNode, nodeDirection, directionsToNumber(originNode));
-  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false);
+  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,true);
 
 }
 
-function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode) {
+function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode) {
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
-
-  if (nodeDirection === 'south' && grid[currentTile.y+1][currentTile.x] === 0 && !pathingTileIsNode) {
-    for (let tile in pathfindingTileList) {
-      tile = pathfindingTileList[tile];
-      if (currentTile.y+1 === tile.y) {
-        break;
-      }
+  let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+  //check if direction tile path is moving is blocked off, creating a checkpoint node
+  if (!firstNode) {
+    if (!tileOpenDirections[0] && nodeDirection === "north") {
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.pop();
+      pathfindingNodeList.push(node);
+      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
-    let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y+1);
-    let node = {
-      x: currentTile.x,
-      y: currentTile.y+1,
-      N: originNeighborSpaces[0],
-      E: originNeighborSpaces[1],
-      S: originNeighborSpaces[2],
-      W: originNeighborSpaces[3],
-    };
-    pathfindingTileList.push(node);
-    moveTowardsPlayer('south',pathfindingTileList[0], false);
-    //console.log(pathfindingTileList);
+    if (!tileOpenDirections[1] && nodeDirection === "east") {
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.pop();
+      pathfindingNodeList.push(node);
+      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
+    }
+    if (!tileOpenDirections[2] && nodeDirection === "south") {
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.pop();
+      pathfindingNodeList.push(node);
+      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
+    }
+    if (!tileOpenDirections[3] && nodeDirection === "west") {
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.pop();
+      pathfindingNodeList.push(node);
+      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
+    }
   }
-  if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0 && !pathingTileIsNode) {
-    for (let tile in pathfindingTileList) {
-      tile = pathfindingTileList[tile];
-      if (currentTile.y-1 === tile.y) {
-        break;
+  if (!pathingTileIsNode) {
+    //if current tile is NOT a checkpoint node
+    if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0) {
+      for (let tile in pathfindingTileList) {
+        tile = pathfindingTileList[tile];
+        if (currentTile.y-1 === tile.y) {
+          break;
+        }
       }
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y-1,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.push(node);
+      moveTowardsPlayer('north',node, false);
+      //console.log(pathfindingTileList[0]);
     }
-    let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1);
-    let node = {
-      x: currentTile.x,
-      y: currentTile.y-1,
-      N: originNeighborSpaces[0],
-      E: originNeighborSpaces[1],
-      S: originNeighborSpaces[2],
-      W: originNeighborSpaces[3],
-    };
-    pathfindingTileList.push(node);
-    moveTowardsPlayer('north',pathfindingTileList[0], false);
-    //console.log(pathfindingTileList);
+    if (nodeDirection === 'south' && grid[currentTile.y+1][currentTile.x] === 0) {
+      for (let tile in pathfindingTileList) {
+        tile = pathfindingTileList[tile];
+        if (currentTile.y+1 === tile.y) {
+          break;
+        }
+      }
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y+1);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y+1,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.push(node);
+      moveTowardsPlayer('south',pathfindingTileList[0], false);
+      //console.log(pathfindingTileList);
+    }
+    if (nodeDirection === 'east' && grid[currentTile.y][currentTile.x+1] === 0) {
+      for (let tile in pathfindingTileList) {
+        tile = pathfindingTileList[tile];
+        if (currentTile.x+1 === tile.y) {
+          break;
+        }
+      }
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x+1,currentTile.y);
+      let node = {
+        x: currentTile.x+1,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.push(node);
+      moveTowardsPlayer('east',node, false);
+      //console.log(pathfindingTileList[0]);
+    }
+    if (nodeDirection === 'west' && grid[currentTile.y][currentTile.x-1] === 0) {
+      for (let tile in pathfindingTileList) {
+        tile = pathfindingTileList[tile];
+        if (currentTile.x-1 === tile.y) {
+          break;
+        }
+      }
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x-1,currentTile.y);
+      let node = {
+        x: currentTile.x-1,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      pathfindingTileList.push(node);
+      moveTowardsPlayer('west',node, false);
+      //console.log(pathfindingTileList[0]);
+    }
   }
 }
 
@@ -272,6 +375,7 @@ function directionsToNumber(node) {
 }
 
 function fromPositionCheckOpenTiles(x,y) {
+  //true = open
   //return an array that checks what directions have an open space around the enemy
   let leftOpen = false;
   let rightOpen = false;
