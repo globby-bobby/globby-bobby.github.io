@@ -22,7 +22,7 @@ let bombs = [];
 let playerMoveRequest;
 let enemyMovementDirection;
 
-//0 is player's turn, 1 is player aiming, 2 is bot's turn, 3 is bot's aiming
+//0 is player's turn, 1 is player aiming, 2 is enemy's turn, 3 is enemy's aiming
 let gameTurn = 0;
 
 let playerHealth = 3;
@@ -32,8 +32,9 @@ let enemyAmmo = [1,0,0];
 let bannerX = -1152;
 let playerX = 1;
 let playerY = 1;
-let enemyX = 14;
-let enemyY = 9;
+//enemy starts at 14,9
+let enemyX = 5;
+let enemyY = 5;
 let enemyMovements;
 let enemyMoveMode = 'default';
 let enemyTurnsUntiSwitch = 5;
@@ -41,22 +42,12 @@ let enemyTurnsUntiSwitch = 5;
 let pathfindingTileList = [];
 let pathfindingNodeList = [];
 
-// let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-//             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-//             [1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
-//             [1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],
-//             [1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],
-//             [1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1],
-//             [1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],
-//             [1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],
-//             [1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
-//             [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-//             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+// let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //           ];
 //test grid that is completely empty
-//let grid = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],];
+let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 //0 is open space, 1 is wall, 2 is destructable wall
-let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
+//let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
   tile = loadImage('wall.png');
@@ -185,7 +176,7 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   pathfindingNodeList = [originNode];
   //pathfinding tiles nodes are sorted left to right based on order of first to last
   //console.log(originNode, nodeDirection, directionsToNumber(originNode));
-  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,true);
+  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,false);
 
 }
 
@@ -193,7 +184,8 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
   let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
   //check if direction tile path is moving is blocked off, creating a checkpoint node
-  if (!firstNode) {
+
+  if (true) {
     if (!tileOpenDirections[0] && nodeDirection === "north") {
       let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
       let node = {
@@ -248,7 +240,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       };
       pathfindingTileList.pop();
       pathfindingNodeList.push(node);
-      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
+      moveTowardsPlayer(returnRandomDirection(node),node,true,false);
     }
   }
   if (!pathingTileIsNode) {
@@ -290,8 +282,8 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
         W: originNeighborSpaces[3],
       };
       pathfindingTileList.push(node);
-      moveTowardsPlayer('south',pathfindingTileList[0], false);
-      //console.log(pathfindingTileList);
+      moveTowardsPlayer('south',node, false);
+      //console.log(pathfindingTileList[0]);
     }
     if (nodeDirection === 'east' && grid[currentTile.y][currentTile.x+1] === 0) {
       for (let tile in pathfindingTileList) {
