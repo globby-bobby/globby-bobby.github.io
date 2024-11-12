@@ -33,7 +33,7 @@ let bannerX = -1152;
 let playerX = 1;
 let playerY = 1;
 //enemy starts at 14,9
-let enemyX = 5;
+let enemyX = 11;
 let enemyY = 5;
 let enemyMovements;
 let enemyMoveMode = 'default';
@@ -45,9 +45,9 @@ let pathfindingNodeList = [];
 // let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 //           ];
 //test grid that is completely empty
-let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
+//let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 //0 is open space, 1 is wall, 2 is destructable wall
-//let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
+let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
   tile = loadImage('wall.png');
@@ -183,9 +183,11 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
 function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode) {
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
   let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+  let tileDirectionNumber = directionsToNumber(currentTile);
+  //console.log(tileDirectionNumber);
   //check if direction tile path is moving is blocked off, creating a checkpoint node
 
-  if (true) {
+  if (pathfindingTileList.length < 100) {
     if (!tileOpenDirections[0] && nodeDirection === "north") {
       let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
       let node = {
@@ -240,7 +242,21 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       };
       pathfindingTileList.pop();
       pathfindingNodeList.push(node);
-      moveTowardsPlayer(returnRandomDirection(node),node,true,false);
+      moveTowardsPlayer(returnRandomDirection(node),node,false,false);
+    }
+    if (tileDirectionNumber > 1 && !firstNode) {
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let node = {
+        x: currentTile.x,
+        y: currentTile.y,
+        N: originNeighborSpaces[0],
+        E: originNeighborSpaces[1],
+        S: originNeighborSpaces[2],
+        W: originNeighborSpaces[3],
+      };
+      //pathfindingTileList.pop();
+      pathfindingNodeList.push(node);
+      moveTowardsPlayer(nodeDirection,node,false,false);
     }
   }
   if (!pathingTileIsNode) {
@@ -366,7 +382,7 @@ function directionsToNumber(node) {
   return directionCount;
 }
 
-function fromPositionCheckOpenTiles(x,y) {
+function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
   //true = open
   //return an array that checks what directions have an open space around the enemy
   let leftOpen = false;
@@ -377,20 +393,81 @@ function fromPositionCheckOpenTiles(x,y) {
   if (grid[y][x+1] === 0) {
     rightOpen = true;
   }
+  //if checkNearbyNodes is true, count nodes as closed tiles that can't be moved to
+  if (checkNearbyNodes) {
+    for (let node in pathfindingNodeList) {
+      node = pathfindingNodeList[node];
+      if (node.x === x+1) {
+        rightOpen = false;
+        break;
+      }
+    }
+    for (let node in pathfindingTileList) {
+      node = pathfindingTileList[node];
+      if (node.x === x+1) {
+        rightOpen = false;
+      }
+    }
+  }
   // check left
   if (grid[y][x-1] === 0) {
     leftOpen = true;
+  }
+  if (checkNearbyNodes) {
+    for (let node in pathfindingNodeList) {
+      node = pathfindingNodeList[node];
+      if (node.x === x-1) {
+        leftOpen = false;
+        break;
+      }
+    }
+    for (let node in pathfindingTileList) {
+      node = pathfindingTileList[node];
+      if (node.x === x-1) {
+        leftOpen = false;
+      }
+    }
   }
   //check above
   if (grid[y-1][x] === 0) {
     upOpen = true;
   }
+  if (checkNearbyNodes) {
+    for (let node in pathfindingNodeList) {
+      node = pathfindingNodeList[node];
+      if (node.y === y-1) {
+        upOpen = false;
+        break;
+      }
+    }
+    for (let node in pathfindingTileList) {
+      node = pathfindingTileList[node];
+      if (node.y === y-1) {
+        upOpen = false;
+      }
+    }
+  }
   //check below
   if (grid[y+1][x] === 0) {
     downOpen = true;
   }
+  if (checkNearbyNodes) {
+    for (let node in pathfindingNodeList) {
+      node = pathfindingNodeList[node];
+      if (node.y === y+1) {
+        downOpen = false;
+        break;
+      }
+    }
+    for (let node in pathfindingTileList) {
+      node = pathfindingTileList[node];
+      if (node.y === y+1) {
+        downOpen = false;
+      }
+    }
+  }
   let directionList = [upOpen,rightOpen,downOpen,leftOpen];
-  //return directions in order of north,east,south,west
+  //return directions in order of north,east,south,west 
   return directionList;
 }
 
