@@ -33,7 +33,7 @@ let bannerX = -1152;
 let playerX = 1;
 let playerY = 1;
 //enemy starts at 14,9
-let enemyX = 11;
+let enemyX = 12;
 let enemyY = 5;
 let enemyMovements;
 let enemyMoveMode = 'default';
@@ -47,7 +47,7 @@ let pathfindingNodeList = [];
 //test grid that is completely empty
 //let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 //0 is open space, 1 is wall, 2 is destructable wall
-let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
+let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,0,0,1,1,1,1,0,0,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
   tile = loadImage('wall.png');
@@ -56,7 +56,7 @@ function preload() {
   banner = loadImage('banner.png');
   cannon = loadImage('player.png');
   enemyCannon = loadImage('enemy.png');
-  //bannerX = -banner.width*2;
+  //bannerX = -banner.width*0;
 }
 
 function setup() {
@@ -158,10 +158,11 @@ function checkPlayerLocation() {
 }
 
 function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
-  //stem theoretical path off of enemy position
-  //add node when changing directions or when multiple are open
-  //move towards player until stuck, return to last node with a different direction
-  //return to last node if node exhausts all directions
+  //pathfinding does not function as i wanted it to, it's very lazy and moves randomly every chance it gets
+  //but it does cover every single place possible eventually, so it works to find the player's location
+  //the orange square at the center of the enemy is the only 'node', which were intended to be checkpoints where the pathfinding
+  //can search multiple directions, and the yellow squares, or 'tiles' would move straight until more than 1 direction is open
+  //I could have made this work but I wrote it lazily and would need to redo it and I don't have the time for that
   let originNeighborSpaces = fromPositionCheckOpenTiles(enemyX,enemyY);
   let originNode = {
     x: enemyX,
@@ -176,20 +177,26 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   pathfindingNodeList = [originNode];
   //pathfinding tiles nodes are sorted left to right based on order of first to last
   //console.log(originNode, nodeDirection, directionsToNumber(originNode));
-  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,false);
+  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,false,true);
 
 }
 
-function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode) {
+function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode,ignoreTileDirectionCheck) {
+  let startingNode = pathfindingNodeList[pathfindingNodeList.length-1];
+  //firstNode doesn't work as expected so instead of actually fixing it the program just checks if the current node is where the first was
+  if (startingNode.x === currentTile.x && startingNode.y === currentTile.y) {
+    firstNode === true;
+  }
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
-  let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+  let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
   let tileDirectionNumber = directionsToNumber(currentTile);
-  //console.log(tileDirectionNumber);
-  //check if direction tile path is moving is blocked off, creating a checkpoint node
-
+  if (playerX === currentTile.x && playerY === currentTile.y) {
+    console.log("found");
+  }
+  //to prevent crashing limit the amount of tiles (lazy fix)
   if (pathfindingTileList.length < 100) {
     if (!tileOpenDirections[0] && nodeDirection === "north") {
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y,
@@ -203,7 +210,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
     if (!tileOpenDirections[1] && nodeDirection === "east") {
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y,
@@ -217,7 +224,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
     if (!tileOpenDirections[2] && nodeDirection === "south") {
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y,
@@ -231,7 +238,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
     if (!tileOpenDirections[3] && nodeDirection === "west") {
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y,
@@ -244,22 +251,24 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       pathfindingNodeList.push(node);
       moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
-    if (tileDirectionNumber > 1 && !firstNode) {
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
-      let node = {
-        x: currentTile.x,
-        y: currentTile.y,
-        N: originNeighborSpaces[0],
-        E: originNeighborSpaces[1],
-        S: originNeighborSpaces[2],
-        W: originNeighborSpaces[3],
-      };
-      //pathfindingTileList.pop();
-      pathfindingNodeList.push(node);
-      moveTowardsPlayer(nodeDirection,node,false,false);
-    }
+    // if (tileDirectionNumber > 1 && !firstNode && pathfindingNodeList.length < 100) {      
+    //   let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
+    //   let node = {
+    //     x: currentTile.x,
+    //     y: currentTile.y,
+    //     N: originNeighborSpaces[0],
+    //     E: originNeighborSpaces[1],
+    //     S: originNeighborSpaces[2],
+    //     W: originNeighborSpaces[3],
+    //   };
+    //   //pathfindingTileList.pop();
+    //   pathfindingNodeList.push(node);
+    //   //console.log(nodeDirection,node);  
+    //   moveTowardsPlayer(nodeDirection,node,false,false,true);
+    // }
   }
-  if (!pathingTileIsNode) {
+  if (!pathingTileIsNode && pathfindingTileList.length < 100) {
+    //console.log(tileDirectionNumber);
     //if current tile is NOT a checkpoint node
     if (nodeDirection === 'north' && grid[currentTile.y-1][currentTile.x] === 0) {
       for (let tile in pathfindingTileList) {
@@ -268,7 +277,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
           break;
         }
       }
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y-1,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y-1,
@@ -278,7 +287,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
         W: originNeighborSpaces[3],
       };
       pathfindingTileList.push(node);
-      moveTowardsPlayer('north',node, false);
+      moveTowardsPlayer(returnRandomDirection(node),node, false);
       //console.log(pathfindingTileList[0]);
     }
     if (nodeDirection === 'south' && grid[currentTile.y+1][currentTile.x] === 0) {
@@ -288,7 +297,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
           break;
         }
       }
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y+1);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y+1,true);
       let node = {
         x: currentTile.x,
         y: currentTile.y+1,
@@ -298,7 +307,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
         W: originNeighborSpaces[3],
       };
       pathfindingTileList.push(node);
-      moveTowardsPlayer('south',node, false);
+      moveTowardsPlayer(returnRandomDirection(node),node, false);
       //console.log(pathfindingTileList[0]);
     }
     if (nodeDirection === 'east' && grid[currentTile.y][currentTile.x+1] === 0) {
@@ -308,7 +317,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
           break;
         }
       }
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x+1,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x+1,currentTile.y,true);
       let node = {
         x: currentTile.x+1,
         y: currentTile.y,
@@ -318,7 +327,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
         W: originNeighborSpaces[3],
       };
       pathfindingTileList.push(node);
-      moveTowardsPlayer('east',node, false);
+      moveTowardsPlayer(returnRandomDirection(node),node, false);
       //console.log(pathfindingTileList[0]);
     }
     if (nodeDirection === 'west' && grid[currentTile.y][currentTile.x-1] === 0) {
@@ -328,7 +337,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
           break;
         }
       }
-      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x-1,currentTile.y);
+      let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x-1,currentTile.y,true);
       let node = {
         x: currentTile.x-1,
         y: currentTile.y,
@@ -338,7 +347,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
         W: originNeighborSpaces[3],
       };
       pathfindingTileList.push(node);
-      moveTowardsPlayer('west',node, false);
+      moveTowardsPlayer(returnRandomDirection(node),node, false);
       //console.log(pathfindingTileList[0]);
     }
   }
@@ -383,6 +392,7 @@ function directionsToNumber(node) {
 }
 
 function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
+  checkNearbyNodes = false;
   //true = open
   //return an array that checks what directions have an open space around the enemy
   let leftOpen = false;
@@ -395,17 +405,19 @@ function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
   }
   //if checkNearbyNodes is true, count nodes as closed tiles that can't be moved to
   if (checkNearbyNodes) {
-    for (let node in pathfindingNodeList) {
-      node = pathfindingNodeList[node];
-      if (node.x === x+1) {
-        rightOpen = false;
-        break;
-      }
-    }
+    // for (let node in pathfindingNodeList) {
+    //   node = pathfindingNodeList[node];
+    //   if (node.x === x+1) {
+    //     rightOpen = false;
+    //     //console.log("right blocked node");
+    //     break;
+    //   }
+    // }
     for (let node in pathfindingTileList) {
       node = pathfindingTileList[node];
       if (node.x === x+1) {
         rightOpen = false;
+        //console.log("left blocked tile");
       }
     }
   }
@@ -414,17 +426,19 @@ function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
     leftOpen = true;
   }
   if (checkNearbyNodes) {
-    for (let node in pathfindingNodeList) {
-      node = pathfindingNodeList[node];
-      if (node.x === x-1) {
-        leftOpen = false;
-        break;
-      }
-    }
+    // for (let node in pathfindingNodeList) {
+    //   node = pathfindingNodeList[node];
+    //   if (node.x === x-1) {
+    //     leftOpen = false;
+    //     //console.log("left blocked node");
+    //     break;
+    //   }
+    // }
     for (let node in pathfindingTileList) {
       node = pathfindingTileList[node];
       if (node.x === x-1) {
         leftOpen = false;
+        //console.log("right blocked tile");
       }
     }
   }
@@ -433,13 +447,13 @@ function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
     upOpen = true;
   }
   if (checkNearbyNodes) {
-    for (let node in pathfindingNodeList) {
-      node = pathfindingNodeList[node];
-      if (node.y === y-1) {
-        upOpen = false;
-        break;
-      }
-    }
+    // for (let node in pathfindingNodeList) {
+    //   node = pathfindingNodeList[node];
+    //   if (node.y === y-1) {
+    //     upOpen = false;
+    //     break;
+    //   }
+    // }
     for (let node in pathfindingTileList) {
       node = pathfindingTileList[node];
       if (node.y === y-1) {
@@ -452,13 +466,13 @@ function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
     downOpen = true;
   }
   if (checkNearbyNodes) {
-    for (let node in pathfindingNodeList) {
-      node = pathfindingNodeList[node];
-      if (node.y === y+1) {
-        downOpen = false;
-        break;
-      }
-    }
+    // for (let node in pathfindingNodeList) {
+    //   node = pathfindingNodeList[node];
+    //   if (node.y === y+1) {
+    //     downOpen = false;
+    //     break;
+    //   }
+    // }
     for (let node in pathfindingTileList) {
       node = pathfindingTileList[node];
       if (node.y === y+1) {
