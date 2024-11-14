@@ -8,7 +8,7 @@
 let canvas;
 const FRAMERATE = 2;
 
-let debug = true;
+let debug = false;
 const pathfindingTurnRandom = true;
 
 let tile;
@@ -17,6 +17,8 @@ let background;
 let banner;
 let cannon;
 let enemyCannon;
+let bomb;
+let nuke;
 let gameState = "game1";
 let bombs = [];
 let playerMoveRequest;
@@ -27,17 +29,17 @@ let gameTurn = 0;
 
 let playerHealth = 3;
 let enemyHealth = 3;
-let playerAmmo = [1,0,0];
+let playerAmmo = [1,1,2];
 let enemyAmmo = [1,0,0];
 let bannerX = -1152;
 let playerX = 1;
 let playerY = 1;
 //enemy starts at 14,9
-let enemyX = 12;
-let enemyY = 5;
+let enemyX = 14;
+let enemyY = 9;
 let enemyMovements;
 let enemyMoveMode = 'default';
-let enemyTurnsUntiSwitch = 5;
+let enemyTurnsUntilSwitch = 5;
 
 let pathfindingTileList = [];
 let pathfindingNodeList = [];
@@ -47,7 +49,7 @@ let pathfindingNodeList = [];
 //test grid that is completely empty
 //let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 //0 is open space, 1 is wall, 2 is destructable wall
-let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,0,0,1,1,1,1,0,0,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
+let grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,2,1,0,0,0,2,0,0,2,0,0,0,1,2,1],[1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1],[1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1],[1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1],[1,0,0,0,2,0,0,1,1,0,0,2,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],];
 
 function preload() {
   tile = loadImage('wall.png');
@@ -56,6 +58,8 @@ function preload() {
   banner = loadImage('banner.png');
   cannon = loadImage('player.png');
   enemyCannon = loadImage('enemy.png');
+  bomb = loadImage('bomb.png');
+  nuke = loadImage('nuke.png');
   //bannerX = -banner.width*0;
 }
 
@@ -71,13 +75,18 @@ function setup() {
 function draw() {
   noSmooth();
   //checkPlayerLocation();
-  checkGameState();
-  image(background,0,0,width,height);
-  drawMap();
-  if (debug) {
+  if (!debug) {
+    image(background,0,0,width,height);
+  }
+  else {
+    //remove background to show pathfinding clearer
+    fill(100);
+    rect(0,0,width,height);
     drawPathfindingTiles();
   }
+  drawMap();
   drawPlayers();
+  checkGameState();
   checkGameTurn();
   if (frameCount % 30 === 0) {
     //buffer player movements every 15 frames to 'fake' low framerate (it takes 30 frames to change player positions)
@@ -109,14 +118,15 @@ function checkGameState() {
     moveBanner();
   }
   if (gameState === "game1") {
-
+    drawHealth();
+    drawAmmo();
   }
 }
 
 function changeGameTurn(turnChange) {
   //changes turn to turnChange although turns should always just be increasing by one
   if (turnChange === 2) {
-    enemyTurnsUntiSwitch++;
+    enemyTurnsUntilSwitch++;
   }
   gameTurn = turnChange;
 }
@@ -177,21 +187,20 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
   pathfindingNodeList = [originNode];
   //pathfinding tiles nodes are sorted left to right based on order of first to last
   //console.log(originNode, nodeDirection, directionsToNumber(originNode));
-  moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,false,true);
-
+  if (dist(playerX,playerY,enemyX,enemyY) > 1) {
+    moveTowardsPlayer(nodeDirection,pathfindingNodeList[0],false,false);
+  }
 }
 
-function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode,ignoreTileDirectionCheck) {
-  let startingNode = pathfindingNodeList[pathfindingNodeList.length-1];
-  //firstNode doesn't work as expected so instead of actually fixing it the program just checks if the current node is where the first was
-  if (startingNode.x === currentTile.x && startingNode.y === currentTile.y) {
-    firstNode === true;
-  }
+function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode) {
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
   let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
-  let tileDirectionNumber = directionsToNumber(currentTile);
   if (playerX === currentTile.x && playerY === currentTile.y) {
-    console.log("found");
+    enemyX = pathfindingTileList[0].x;
+    enemyY = pathfindingTileList[0].y;
+    console.log(dist(playerX,playerY,enemyX,enemyY));
+    changeGameTurn(2);
+    return;
   }
   //to prevent crashing limit the amount of tiles (lazy fix)
   if (pathfindingTileList.length < 100) {
@@ -251,21 +260,6 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
       pathfindingNodeList.push(node);
       moveTowardsPlayer(returnRandomDirection(node),node,false,false);
     }
-    // if (tileDirectionNumber > 1 && !firstNode && pathfindingNodeList.length < 100) {      
-    //   let originNeighborSpaces = fromPositionCheckOpenTiles(currentTile.x,currentTile.y);
-    //   let node = {
-    //     x: currentTile.x,
-    //     y: currentTile.y,
-    //     N: originNeighborSpaces[0],
-    //     E: originNeighborSpaces[1],
-    //     S: originNeighborSpaces[2],
-    //     W: originNeighborSpaces[3],
-    //   };
-    //   //pathfindingTileList.pop();
-    //   pathfindingNodeList.push(node);
-    //   //console.log(nodeDirection,node);  
-    //   moveTowardsPlayer(nodeDirection,node,false,false,true);
-    // }
   }
   if (!pathingTileIsNode && pathfindingTileList.length < 100) {
     //console.log(tileDirectionNumber);
@@ -487,133 +481,21 @@ function fromPositionCheckOpenTiles(x,y,checkNearbyNodes) {
 
 function drawPathfindingTiles() {
   //draw pathing tiles, orange are checkpoint nodes, yellow are straight lines of tiles
+  //they are transparent because I noticed the tiles could spawn on top of eachother, making them transparent shows how many tiles overlap
   for (let node in pathfindingNodeList) {
     node = pathfindingNodeList[node];
-    fill(255,115,0);
+    fill(255,115,0,100);
     noStroke();
     square(1+node.x*width/16-1,1+node.y*width/16-1,width/16);
   }
   for (let tile in pathfindingTileList) {
     tile = pathfindingTileList[tile];
     //console.log(tile);
-    fill(225,225,0);
+    fill(225,225,0,70);
     noStroke();
     square(1+tile.x*width/16-1,1+tile.y*width/16-1,width/16);
   }
 }
-
-// function moveTowardsPlayer(moveDirectionX,moveDirectionY,preference,mode) {
-//   enemyMovements++;
-//   console.log(enemyMovements);
-//   if (enemyMovements === 5) {
-//     //if enemy gets stuck, move randomly (lazy solution)
-//     moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-//   }
-//   // if (enemyMoveMode === 'default');
-//   if (round(random(0,1)) !== 1 || preference === 'horizontal') {
-//     //console.log(moveDirectionX);
-//     if (moveDirectionX === 'left') {
-//       console.log('left');
-//       if (grid[enemyY][enemyX-1] === 0) {
-//         enemyX--;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-//       }
-//     }
-//     if (moveDirectionX === 'right') {
-//       console.log('right');
-//       if (grid[enemyY][enemyX+1] === 0) {
-//         enemyX++;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-//       }
-//     }
-//     if (moveDirectionX === 'center') {
-//       //if on the same X level as player, retry function with a prefrence of moving horizontally
-//       //this actually works, even though I thought it would stick the enemy in a loop of never moving
-//       console.log('retry X');
-//       moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-//     }
-//     //changeGameTurn(0);
-//   }
-//   else if (preference === 'random' || round(random(0,16)) === 16) {
-//     let randomEnemyMoveDirection = round(random(0,3));
-//     if (randomEnemyMoveDirection === 0) {
-//       if (grid[enemyY][enemyX-1] === 0) {
-//         enemyX--;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-//       }
-//     }
-//     if (randomEnemyMoveDirection === 1) {
-//       if (grid[enemyY][enemyX+1] === 0) {
-//         enemyX++;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-//       }
-//     }
-//     if (randomEnemyMoveDirection === 2) {
-//       if (grid[enemyY-1][enemyX] === 0) {
-//         enemyY--;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-//       }
-//       if (randomEnemyMoveDirection === 2) {
-//         if (grid[enemyY+1][enemyX] === 0) {
-//           enemyY++;
-//           changeGameTurn(2);
-//         }
-//         else {
-//           moveTowardsPlayer(moveDirectionX,moveDirectionY,'random');
-//         }
-//       }
-//     }
-//   }
-//   else {
-//     if (moveDirectionY === 'above') {
-//       console.log('up');
-//       if (grid[enemyY-1][enemyX] === 0) {
-//         enemyY--;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         if (enemyMovements > 4) {
-//           if (grid[enemyY+1][enemyX] === 0) {
-//             enemyY++;
-//             changeGameTurn(2);
-//           }
-//         }
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-//       }
-//     }
-//     if (moveDirectionY === 'below') {
-//       console.log('down');
-//       if (grid[enemyY+1][enemyX] === 0) {
-//         enemyY++;
-//         changeGameTurn(2);
-//       }
-//       else {
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'horizontal');
-//       }
-//       if (moveDirectionY === 'center') {
-//         //if on the same Y level as player, retry function with a prefrence of moving vertically
-//         console.log('retry Y');
-//         moveTowardsPlayer(moveDirectionX,moveDirectionY,'vertical');
-//       }
-//     }
-//     //changeGameTurn(0);
-//   }
-// }
 
 function moveEntities() {
   //if successful, move the player and end their turn
@@ -703,4 +585,43 @@ function drawPlayers() {
   //draw the cannon characters using weird specific numbers that somehow work
   image(cannon,1+playerX*width/16-1,1+playerY*width/16-1,width/16,width/16);
   image(enemyCannon,1+enemyX*width/16-1,1+enemyY*width/16-1,width/16,width/16);
+}
+
+function drawHealth() {
+  //draw cannons at bottom on screen based on player health
+  if (playerHealth === 1) {
+    image(cannon,1+6*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerHealth === 2) {
+    image(cannon,1+6*width/16-1,1+11*width/16-1,width/16,width/16);
+    image(cannon,1+7*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerHealth === 3) {
+    image(cannon,1+6*width/16-1,1+11*width/16-1,width/16,width/16);
+    image(cannon,1+7*width/16-1,1+11*width/16-1,width/16,width/16);
+    image(cannon,1+8*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+}
+
+function drawAmmo() {
+  //draw bombs at bottom on screen based on player ammo count
+  if (playerAmmo[0] === 1) {
+    image(bomb,1+13*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerAmmo[1] === 1) {
+    image(bomb,1+14*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerAmmo[2] === 1) {
+    image(bomb,1+15*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+
+  if (playerAmmo[0] === 2) {
+    image(nuke,1+13*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerAmmo[1] === 2) {
+    image(nuke,1+14*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+  if (playerAmmo[2] === 2) {
+    image(nuke,1+15*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
 }
