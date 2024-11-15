@@ -19,6 +19,7 @@ let cannon;
 let enemyCannon;
 let bomb;
 let nuke;
+let aimImage;
 let gameState = "game1";
 let bombs = [];
 let playerMoveRequest;
@@ -37,6 +38,8 @@ let playerY = 1;
 //enemy starts at 14,9
 let enemyX = 14;
 let enemyY = 9;
+let aimDirection = 'east';
+let aimSquareVisible;
 let enemyMovements;
 let enemyMoveMode = 'default';
 let enemyTurnsUntilSwitch = 5;
@@ -60,6 +63,7 @@ function preload() {
   enemyCannon = loadImage('enemy.png');
   bomb = loadImage('bomb.png');
   nuke = loadImage('nuke.png');
+  aimImage = loadImage('aim.png');
   //bannerX = -banner.width*0;
 }
 
@@ -68,7 +72,7 @@ function setup() {
   //shake left and right when bomb's explosion 'ticks'
   canvas.position((windowWidth-width)/2,0);
   pixelDensity(5);
-  console.log(width,height,banner.width);
+  console.log("Window Size:",width,height);
 
 }
 
@@ -92,6 +96,7 @@ function draw() {
     //buffer player movements every 15 frames to 'fake' low framerate (it takes 30 frames to change player positions)
     moveEntities();
   }
+  drawAimSquare();
 }
 
 function checkGameTurn() {
@@ -195,10 +200,10 @@ function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
 function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode) {
   //pathingTileIsNode is true if current tile is an orange node, a checkpoint where the pathfinding checks all four directions
   let tileOpenDirections = fromPositionCheckOpenTiles(currentTile.x,currentTile.y,true);
-  if (playerX === currentTile.x && playerY === currentTile.y) {
+  //if enemy found player
+  if (playerX === currentTile.x && playerY === currentTile.y && (pathfindingTileList.length < round(dist(playerX,playerY,enemyX,enemyY)) + 25 || dist(playerX,playerY,enemyX,enemyY) > 7)) {
     enemyX = pathfindingTileList[0].x;
     enemyY = pathfindingTileList[0].y;
-    console.log(dist(playerX,playerY,enemyX,enemyY));
     changeGameTurn(2);
     return;
   }
@@ -547,6 +552,24 @@ function checkInput() {
       playerMoveRequest = "down";
     };
   }
+  if (keyIsPressed) {
+    if (keyIsDown(RIGHT_ARROW) && aimDirection !== 'east') {
+      aimDirection = 'east';
+      aimSquareVisible = true;
+    };
+    if (keyIsDown(LEFT_ARROW) && aimDirection !== 'west') {
+      aimDirection = 'west';
+      aimSquareVisible = true;
+    };
+    if (keyIsDown(UP_ARROW) && aimDirection !== 'north') {
+      aimDirection = 'north';
+      aimSquareVisible = true;
+    };
+    if (keyIsDown(DOWN_ARROW) && aimDirection !== 'south') {
+      aimDirection = 'south';
+      aimSquareVisible = true;
+    };
+  }
 }
 
 function moveBanner() {
@@ -623,5 +646,29 @@ function drawAmmo() {
   }
   if (playerAmmo[2] === 2) {
     image(nuke,1+15*width/16-1,1+11*width/16-1,width/16,width/16);
+  }
+}
+
+function drawAimSquare() {
+  if (frameCount % 20  === 0) {
+    aimSquareVisible = !aimSquareVisible;
+    noStroke();
+    fill(255,110,0);
+  }
+  if (aimSquareVisible) {
+    noStroke();
+    fill(255,110,0);
+    if (aimDirection === 'north') {
+      image(aimImage,1+playerX*width/16-1,1+(playerY-1)*width/16-1,width/16,width/16);
+    }
+    if (aimDirection === 'south') {
+      image(aimImage,1+playerX*width/16-1,1+(playerY+1)*width/16-1,width/16,width/16);
+    }
+    if (aimDirection === 'east') {
+      image(aimImage,1+(playerX+1)*width/16-1,1+playerY*width/16-1,width/16,width/16);
+    }
+    if (aimDirection === 'west') {
+      image(aimImage,1+(playerX-1)*width/16-1,1+playerY*width/16-1,width/16,width/16);
+    }
   }
 }
