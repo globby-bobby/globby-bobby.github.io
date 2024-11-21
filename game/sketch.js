@@ -32,6 +32,7 @@ let playerHealth = 3;
 let enemyHealth = 3;
 let playerAmmo = [1,1,2];
 let enemyAmmo = [1,0,0];
+let isPlayerStats = true;
 let bannerX = -1152;
 let playerX = 1;
 let playerY = 1;
@@ -42,7 +43,6 @@ let aimDirection = 'east';
 let aimSquareVisible;
 let enemyMovements;
 let enemyMoveMode = 'default';
-let enemyTurnsUntilSwitch = 5;
 
 let pathfindingTileList = [];
 let pathfindingNodeList = [];
@@ -96,7 +96,9 @@ function draw() {
     //buffer player movements every 15 frames to 'fake' low framerate (it takes 30 frames to change player positions)
     moveEntities();
   }
-  drawAimSquare();
+  if (gameTurn === 1) {
+    drawAimSquare();
+  }
 }
 
 function checkGameTurn() {
@@ -105,13 +107,18 @@ function checkGameTurn() {
   //player movement turn
   if (gameTurn === 0) {
     checkInput();
+    isPlayerStats = true;
   }
   //enemy movement turn
   else if (gameTurn === 1) {
-    checkPlayerLocation();
+    checkInput();
   }
   else if (gameTurn === 2) {
-    gameTurn = 0;
+    moveBombs();
+  }
+  else if (gameTurn === 3) {
+    checkPlayerLocation();
+    isPlayerStats = false;
   }
 }
 
@@ -130,9 +137,6 @@ function checkGameState() {
 
 function changeGameTurn(turnChange) {
   //changes turn to turnChange although turns should always just be increasing by one
-  if (turnChange === 2) {
-    enemyTurnsUntilSwitch++;
-  }
   gameTurn = turnChange;
 }
 
@@ -168,11 +172,11 @@ function checkPlayerLocation() {
     //console.log("center");
     moveDirectionY = "none";
   }
-  initMoveTowardsPlayer(moveDirectionX,moveDirectionY);
+  initMoveTowardsPlayer();
   //moveTowardsPlayer(moveDirectionX,moveDirectionY,'none',enemyMoveMode);
 }
 
-function initMoveTowardsPlayer(moveDirectionX,moveDirectionY,mode) {
+function initMoveTowardsPlayer() {
   //pathfinding does not function as i wanted it to, it's very lazy and moves randomly every chance it gets
   //but it does cover every single place possible eventually, so it works to find the player's location
   //the orange square at the center of the enemy is the only 'node', which were intended to be checkpoints where the pathfinding
@@ -204,7 +208,7 @@ function moveTowardsPlayer(nodeDirection,currentTile,pathingTileIsNode,firstNode
   if (playerX === currentTile.x && playerY === currentTile.y && (pathfindingTileList.length < round(dist(playerX,playerY,enemyX,enemyY)) + 25 || dist(playerX,playerY,enemyX,enemyY) > 7)) {
     enemyX = pathfindingTileList[0].x;
     enemyY = pathfindingTileList[0].y;
-    changeGameTurn(2);
+    changeGameTurn(3);
     return;
   }
   //to prevent crashing limit the amount of tiles (lazy fix)
@@ -538,7 +542,7 @@ function moveEntities() {
 
 function checkInput() {
   //check the input for the player
-  if (keyIsPressed) {
+  if (keyIsPressed && gameTurn === 0) {
     if (keyIsDown(RIGHT_ARROW)) {
       playerMoveRequest = "right";
     };
@@ -552,7 +556,7 @@ function checkInput() {
       playerMoveRequest = "down";
     };
   }
-  if (keyIsPressed) {
+  if (keyIsPressed && gameTurn === 1) {
     if (keyIsDown(RIGHT_ARROW) && aimDirection !== 'east') {
       aimDirection = 'east';
       aimSquareVisible = true;
@@ -569,6 +573,45 @@ function checkInput() {
       aimDirection = 'south';
       aimSquareVisible = true;
     };
+    if (keyIsDown(ENTER)) {
+      spawnBomb(aimDirection, true);
+      changeGameTurn(2);
+    };
+  }
+}
+
+function spawnBomb(bombMoveDirection, isPlayerBomb) {
+  console.log('bomb');
+  let bombType;
+  if (isPlayerBomb) {
+    //bomb type 0 is bomb, bomb type 1 is nuke
+    if (playerAmmo[0] === 1) {
+      bombType = 0
+    }
+    if (playerAmmo[0] === 2) {
+      bombType = 1
+    }
+    let bomb = {
+      x: playerX,
+      y: playerY,
+      bombMoveDirection: bombMoveDirection,
+      type: 0
+    };
+    bombs.push(bomb);
+  }
+}
+
+function moveBombs() {
+  for (let bomb in bombs) {
+    bomb = bombs[bomb];
+    if (bomb.bombMoveDirection === 'north') {
+      if (grid[bomb.y+1][bomb.x] === 0) {
+        
+        bomb.y++;
+        playerMoveRequest = "none";
+        changeGameTurn(1);
+      }
+    }
   }
 }
 
